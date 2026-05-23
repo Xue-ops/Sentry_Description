@@ -1,14 +1,18 @@
 <?xml version="1.0"?>
 <robot name="simple_robot" xmlns:xacro="http://ros.org/wiki/xacro">
 
+  <xacro:property name="base_size" value="0.45"/>
+  <xacro:property name="base_height" value="0.25"/>
+  <xacro:property name="base_z" value="0.15"/>
+
   <!-- ===================== -->
   <!-- odin1_base_link -->
   <!-- ===================== -->
   <link name="odin1_base_link">
     <visual>
-      <origin xyz="0 0 0.15" rpy="0 0 0"/>
+      <origin xyz="0 0 ${base_z}" rpy="0 0 0"/>
       <geometry>
-        <box size="0.45 0.35 0.25"/>
+        <box size="${base_size} ${base_size} ${base_height}"/>
       </geometry>
       <material name="blue">
         <color rgba="1.0 0.0 0.0 1.0"/>
@@ -16,14 +20,14 @@
     </visual>
 
     <collision>
-      <origin xyz="0 0 0.15" rpy="0 0 0"/>
+      <origin xyz="0 0 ${base_z}" rpy="0 0 0"/>
       <geometry>
-        <box size="0.45 0.35 0.25"/>
+        <box size="${base_size} ${base_size} ${base_height}"/>
       </geometry>
     </collision>
 
     <inertial>
-      <origin xyz="0 0 0.15" rpy="0 0 0"/>
+      <origin xyz="0 0 ${base_z}" rpy="0 0 0"/>
       <mass value="8.0"/>
       <inertia
         ixx="0.15" ixy="0.0" ixz="0.0"
@@ -32,77 +36,120 @@
     </inertial>
   </link>
 
-  <!-- ===================== -->
-  <!-- left wheel -->
-  <!-- ===================== -->
-  <link name="left_wheel_link">
-    <visual>
-      <origin xyz="0 0 0" rpy="1.5708 0 0"/>
-      <geometry>
-        <cylinder radius="0.08" length="0.04"/>
-      </geometry>
-      <material name="black">
-        <color rgba="0.02 0.02 0.02 1.0"/>
-      </material>
-    </visual>
-
-    <collision>
-      <origin xyz="0 0 0" rpy="1.5708 0 0"/>
-      <geometry>
-        <cylinder radius="0.08" length="0.04"/>
-      </geometry>
-    </collision>
-
-    <inertial>
-      <mass value="0.5"/>
-      <inertia
-        ixx="0.001" ixy="0.0" ixz="0.0"
-        iyy="0.001" iyz="0.0"
-        izz="0.001"/>
-    </inertial>
-  </link>
-
-  <joint name="left_wheel_joint" type="continuous">
-    <parent link="odin1_base_link"/>
-    <child link="left_wheel_link"/>
-    <origin xyz="0 0.2 0.08" rpy="0 0 0"/>
-    <axis xyz="0 1 0"/>
-  </joint>
+  <xacro:property name="wheel_radius" value="0.08"/>
+  <xacro:property name="wheel_width" value="0.04"/>
+  <xacro:property name="wheel_xy_offset" value="0.19"/>
+  <xacro:property name="wheel_z_offset" value="0.08"/>
+  <xacro:property name="wheel_mount_yaw" value="0.785398"/>
 
   <!-- ===================== -->
-  <!-- right wheel -->
+  <!-- four omni wheels -->
   <!-- ===================== -->
-  <link name="right_wheel_link">
-    <visual>
-      <origin xyz="0 0 0" rpy="1.5708 0 0"/>
-      <geometry>
-        <cylinder radius="0.08" length="0.04"/>
-      </geometry>
-      <material name="black"/>
-    </visual>
+  <xacro:macro name="omni_wheel" params="prefix x y wheel_yaw roller_yaw">
+    <link name="${prefix}_wheel_link">
+      <visual>
+        <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+        <geometry>
+          <cylinder radius="${wheel_radius}" length="${wheel_width}"/>
+        </geometry>
+        <material name="black">
+          <color rgba="0.02 0.02 0.02 1.0"/>
+        </material>
+      </visual>
 
-    <collision>
-      <origin xyz="0 0 0" rpy="1.5708 0 0"/>
-      <geometry>
-        <cylinder radius="0.08" length="0.04"/>
-      </geometry>
-    </collision>
+      <collision>
+        <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+        <geometry>
+          <cylinder radius="${wheel_radius}" length="${wheel_width}"/>
+        </geometry>
+      </collision>
 
-    <inertial>
-      <mass value="0.5"/>
-      <inertia
-        ixx="0.001" ixy="0.0" ixz="0.0"
-        iyy="0.001" iyz="0.0"
-        izz="0.001"/>
-    </inertial>
-  </link>
+      <inertial>
+        <mass value="0.5"/>
+        <inertia
+          ixx="0.001" ixy="0.0" ixz="0.0"
+          iyy="0.001" iyz="0.0"
+          izz="0.001"/>
+      </inertial>
+    </link>
 
-  <joint name="right_wheel_joint" type="continuous">
-    <parent link="odin1_base_link"/>
-    <child link="right_wheel_link"/>
-    <origin xyz="0 -0.2 0.08" rpy="0 0 0"/>
-    <axis xyz="0 1 0"/>
-  </joint>
+    <joint name="${prefix}_wheel_joint" type="continuous">
+      <parent link="odin1_base_link"/>
+      <child link="${prefix}_wheel_link"/>
+      <origin xyz="${x} ${y} ${wheel_z_offset}" rpy="0 0 ${wheel_yaw}"/>
+      <axis xyz="0 1 0"/>
+    </joint>
+
+    <link name="${prefix}_roller_link">
+      <visual>
+        <origin xyz="0 0 0" rpy="0.7854 0 ${roller_yaw}"/>
+        <geometry>
+          <box size="0.11 0.02 0.02"/>
+        </geometry>
+        <material name="silver">
+          <color rgba="0.65 0.65 0.65 1.0"/>
+        </material>
+      </visual>
+
+      <collision>
+        <origin xyz="0 0 0" rpy="0.7854 0 ${roller_yaw}"/>
+        <geometry>
+          <box size="0.11 0.02 0.02"/>
+        </geometry>
+      </collision>
+
+      <inertial>
+        <mass value="0.05"/>
+        <inertia
+          ixx="0.00005" ixy="0.0" ixz="0.0"
+          iyy="0.00005" iyz="0.0"
+          izz="0.00005"/>
+      </inertial>
+    </link>
+
+    <joint name="${prefix}_roller_fixed_joint" type="fixed">
+      <parent link="${prefix}_wheel_link"/>
+      <child link="${prefix}_roller_link"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+    </joint>
+
+    <gazebo reference="${prefix}_wheel_link">
+      <material>Gazebo/Black</material>
+      <mu1>0.7</mu1>
+      <mu2>0.7</mu2>
+    </gazebo>
+
+    <gazebo reference="${prefix}_roller_link">
+      <material>Gazebo/Grey</material>
+      <mu1>0.05</mu1>
+      <mu2>0.05</mu2>
+    </gazebo>
+  </xacro:macro>
+
+  <xacro:omni_wheel
+    prefix="front_left"
+    x="${wheel_xy_offset}"
+    y="${wheel_xy_offset}"
+    wheel_yaw="${-wheel_mount_yaw}"
+    roller_yaw="0.7854"/>
+  <xacro:omni_wheel
+    prefix="front_right"
+    x="${wheel_xy_offset}"
+    y="${-wheel_xy_offset}"
+    wheel_yaw="${wheel_mount_yaw}"
+    roller_yaw="-0.7854"/>
+  <xacro:omni_wheel
+    prefix="rear_left"
+    x="${-wheel_xy_offset}"
+    y="${wheel_xy_offset}"
+    wheel_yaw="${wheel_mount_yaw}"
+    roller_yaw="-0.7854"/>
+  <xacro:omni_wheel
+    prefix="rear_right"
+    x="${-wheel_xy_offset}"
+    y="${-wheel_xy_offset}"
+    wheel_yaw="${-wheel_mount_yaw}"
+    roller_yaw="0.7854"/>
 
   <!-- ===================== -->
   <!-- lidar link -->
@@ -194,35 +241,24 @@
   </gazebo>
 
   <!-- ===================== -->
-  <!-- Gazebo diff drive plugin -->
+  <!-- Gazebo omni drive plugin -->
   <!-- publishes odom and odom->odin1_base_link tf -->
   <!-- ===================== -->
   <gazebo>
-    <plugin name="diff_drive_controller" filename="libgazebo_ros_diff_drive.so">
+    <plugin name="omni_drive_controller" filename="libgazebo_ros_planar_move.so">
       <ros>
         <namespace>/</namespace>
         <remapping>cmd_vel:=/cmd_vel</remapping>
         <remapping>odom:=/odom</remapping>
       </ros>
 
-      <left_joint>left_wheel_joint</left_joint>
-      <right_joint>right_wheel_joint</right_joint>
-
-      <wheel_separation>0.4</wheel_separation>
-      <wheel_diameter>0.16</wheel_diameter>
-
-      <max_wheel_torque>20</max_wheel_torque>
-      <max_wheel_acceleration>5.0</max_wheel_acceleration>
-
-      <publish_odom>true</publish_odom>
-      <publish_odom_tf>true</publish_odom_tf>
-      <publish_wheel_tf>true</publish_wheel_tf>
-
+      <command_topic>/cmd_vel</command_topic>
+      <odometry_topic>/odom</odometry_topic>
       <odometry_frame>odom</odometry_frame>
       <robot_base_frame>odin1_base_link</robot_base_frame>
 
-      <odometry_topic>/odom</odometry_topic>
-      <command_topic>/cmd_vel</command_topic>
+      <publish_odom>true</publish_odom>
+      <publish_odom_tf>true</publish_odom_tf>
 
       <update_rate>50</update_rate>
     </plugin>

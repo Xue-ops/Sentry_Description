@@ -66,7 +66,7 @@ def generate_launch_description():
                 '-entity', 'simple_robot',
                 '-x', '0.0',
                 '-y', '0.0',
-                '-z', '10.0'
+                '-z', '0.1'
             ],
             output='screen'
         ),
