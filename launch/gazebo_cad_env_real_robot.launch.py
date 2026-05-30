@@ -58,7 +58,7 @@ def generate_launch_description():
         robot_xacro,
         'odom',
         'robot_base',
-        '/odin1/cmd_vel',
+        '/cmd_vel',
         '/odin1/odom',
         'odom',
         'odin1_base_link',
