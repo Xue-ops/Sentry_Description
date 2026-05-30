@@ -1,21 +1,21 @@
 <?xml version="1.0"?>
-<robot name="simple_robot" xmlns:xacro="http://ros.org/wiki/xacro">
+<robot name="real_robot" xmlns:xacro="http://ros.org/wiki/xacro">
 
-  <xacro:arg name="robot_name" default="odin1"/>
-  <xacro:arg name="frame_prefix" default=""/>
+  <xacro:arg name="base_frame" default="odom"/>
+  <xacro:arg name="robot_base_frame" default="robot_base"/>
   <xacro:arg name="cmd_topic" default="/cmd_vel"/>
   <xacro:arg name="odom_topic" default="/odom"/>
   <xacro:arg name="odom_frame" default="odom"/>
-  <xacro:arg name="cloud_topic" default="/odin1/cloud_slam"/>
-  <xacro:arg name="base_r" default="1.0"/>
-  <xacro:arg name="base_g" default="0.0"/>
-  <xacro:arg name="base_b" default="0.0"/>
-  <xacro:arg name="base_a" default="1.0"/>
-  <xacro:arg name="gazebo_material" default="Gazebo/Red"/>
+  <xacro:arg name="odin1_frame" default="odin1_base_link"/>
+  <xacro:arg name="livox_frame" default="livox_frame"/>
+  <xacro:arg name="odin1_cloud_topic" default="/odin1/cloud_slam"/>
+  <xacro:arg name="odin1_cloud_frame" default="odin1_base_link"/>
+  <xacro:arg name="livox_cloud_topic" default="livox/lidar"/>
+  <xacro:arg name="wheel_prefix" default=""/>
 
   <xacro:property name="base_size" value="0.45"/>
-  <xacro:property name="base_height" value="0.25"/>
-  <xacro:property name="base_z" value="0.15"/>
+  <xacro:property name="base_height" value="0.18"/>
+  <xacro:property name="base_z" value="0.16"/>
 
   <xacro:property name="wheel_radius" value="0.10"/>
   <xacro:property name="wheel_width" value="0.04"/>
@@ -25,21 +25,32 @@
   <xacro:property name="wheel_forward_friction" value="1.5"/>
   <xacro:property name="wheel_side_friction" value="0.05"/>
 
-  <xacro:macro name="simple_omni_robot" params="robot_name frame_prefix cmd_topic odom_topic odom_frame cloud_topic base_r base_g base_b base_a gazebo_material">
-    <xacro:property name="base_link" value="${robot_name}_base_link"/>
-    <xacro:property name="lidar_link" value="${frame_prefix}lidar_link"/>
+  <xacro:property name="odin1_x" value="-0.02897"/>
+  <xacro:property name="odin1_y" value="0.11458"/>
+  <xacro:property name="odin1_z" value="0.24799"/>
+  <xacro:property name="odin1_roll" value="0.0"/>
+  <xacro:property name="odin1_pitch" value="0.0"/>
+  <xacro:property name="odin1_yaw" value="1.57079632679"/>
 
+  <xacro:property name="livox_x" value="0.0025"/>
+  <xacro:property name="livox_y" value="-0.13509"/>
+  <xacro:property name="livox_z" value="0.29325"/>
+  <xacro:property name="livox_roll" value="0.0"/>
+  <xacro:property name="livox_pitch" value="-0.78539816339"/>
+  <xacro:property name="livox_yaw" value="-1.57079632679"/>
+
+  <xacro:macro name="real_omni_robot" params="base_frame robot_base_frame cmd_topic odom_topic odom_frame odin1_frame livox_frame odin1_cloud_topic odin1_cloud_frame livox_cloud_topic wheel_prefix">
     <!-- ===================== -->
     <!-- base link -->
     <!-- ===================== -->
-    <link name="${base_link}">
+    <link name="${robot_base_frame}">
       <visual>
         <origin xyz="0 0 ${base_z}" rpy="0 0 0"/>
         <geometry>
           <box size="${base_size} ${base_size} ${base_height}"/>
         </geometry>
-        <material name="${robot_name}_base_color">
-          <color rgba="${base_r} ${base_g} ${base_b} ${base_a}"/>
+        <material name="${wheel_prefix}base_gray">
+          <color rgba="0.18 0.20 0.22 1.0"/>
         </material>
       </visual>
 
@@ -64,13 +75,13 @@
     <!-- four omni wheels -->
     <!-- ===================== -->
     <xacro:macro name="omni_wheel" params="prefix x y wheel_yaw roller_yaw">
-      <link name="${frame_prefix}${prefix}_wheel_link">
+      <link name="${wheel_prefix}${prefix}_wheel_link">
         <visual>
           <origin xyz="0 0 0" rpy="1.5708 0 0"/>
           <geometry>
             <cylinder radius="${wheel_radius}" length="${wheel_width}"/>
           </geometry>
-          <material name="black">
+          <material name="${wheel_prefix}${prefix}_wheel_black">
             <color rgba="0.02 0.02 0.02 1.0"/>
           </material>
         </visual>
@@ -91,20 +102,20 @@
         </inertial>
       </link>
 
-      <joint name="${frame_prefix}${prefix}_wheel_joint" type="continuous">
-        <parent link="${base_link}"/>
-        <child link="${frame_prefix}${prefix}_wheel_link"/>
+      <joint name="${wheel_prefix}${prefix}_wheel_joint" type="continuous">
+        <parent link="${robot_base_frame}"/>
+        <child link="${wheel_prefix}${prefix}_wheel_link"/>
         <origin xyz="${x} ${y} ${wheel_z_offset}" rpy="0 0 ${wheel_yaw}"/>
         <axis xyz="0 1 0"/>
       </joint>
 
-      <link name="${frame_prefix}${prefix}_roller_link">
+      <link name="${wheel_prefix}${prefix}_roller_link">
         <visual>
           <origin xyz="0 0 0" rpy="0.7854 0 ${roller_yaw}"/>
           <geometry>
             <box size="0.11 0.02 0.02"/>
           </geometry>
-          <material name="silver">
+          <material name="${wheel_prefix}${prefix}_roller_silver">
             <color rgba="0.65 0.65 0.65 1.0"/>
           </material>
         </visual>
@@ -125,20 +136,20 @@
         </inertial>
       </link>
 
-      <joint name="${frame_prefix}${prefix}_roller_fixed_joint" type="fixed">
-        <parent link="${frame_prefix}${prefix}_wheel_link"/>
-        <child link="${frame_prefix}${prefix}_roller_link"/>
+      <joint name="${wheel_prefix}${prefix}_roller_fixed_joint" type="fixed">
+        <parent link="${wheel_prefix}${prefix}_wheel_link"/>
+        <child link="${wheel_prefix}${prefix}_roller_link"/>
         <origin xyz="0 0 0" rpy="0 0 0"/>
       </joint>
 
-      <gazebo reference="${frame_prefix}${prefix}_wheel_link">
+      <gazebo reference="${wheel_prefix}${prefix}_wheel_link">
         <material>Gazebo/Black</material>
         <fdir1>1 0 0</fdir1>
         <mu1>${wheel_forward_friction}</mu1>
         <mu2>${wheel_side_friction}</mu2>
       </gazebo>
 
-      <gazebo reference="${frame_prefix}${prefix}_roller_link">
+      <gazebo reference="${wheel_prefix}${prefix}_roller_link">
         <material>Gazebo/Grey</material>
         <mu1>0.05</mu1>
         <mu2>0.05</mu2>
@@ -171,23 +182,23 @@
       roller_yaw="0.7854"/>
 
     <!-- ===================== -->
-    <!-- lidar link -->
+    <!-- lidar/camera links -->
     <!-- ===================== -->
-    <link name="${lidar_link}">
+    <link name="${odin1_frame}">
       <visual>
         <origin xyz="0 0 0" rpy="0 0 0"/>
         <geometry>
-          <cylinder radius="0.06" length="0.05"/>
+          <cylinder radius="0.055" length="0.06"/>
         </geometry>
-        <material name="red">
-          <color rgba="0.8 0.1 0.1 1.0"/>
+        <material name="${wheel_prefix}odin1_red">
+          <color rgba="0.85 0.12 0.10 1.0"/>
         </material>
       </visual>
 
       <collision>
         <origin xyz="0 0 0" rpy="0 0 0"/>
         <geometry>
-          <cylinder radius="0.06" length="0.05"/>
+          <cylinder radius="0.055" length="0.06"/>
         </geometry>
       </collision>
 
@@ -200,18 +211,51 @@
       </inertial>
     </link>
 
-    <joint name="${frame_prefix}base_to_lidar" type="fixed">
-      <parent link="${base_link}"/>
-      <child link="${lidar_link}"/>
-      <origin xyz="0 0 0.32" rpy="0 0 0"/>
+    <joint name="${robot_base_frame}_to_${odin1_frame}" type="fixed">
+      <parent link="${robot_base_frame}"/>
+      <child link="${odin1_frame}"/>
+      <origin xyz="${odin1_x} ${odin1_y} ${odin1_z}" rpy="${odin1_roll} ${odin1_pitch} ${odin1_yaw}"/>
+    </joint>
+
+    <link name="${livox_frame}">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <box size="0.075 0.075 0.05"/>
+        </geometry>
+        <material name="${wheel_prefix}livox_blue">
+          <color rgba="0.10 0.32 0.85 1.0"/>
+        </material>
+      </visual>
+
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <box size="0.075 0.075 0.05"/>
+        </geometry>
+      </collision>
+
+      <inertial>
+        <mass value="0.2"/>
+        <inertia
+          ixx="0.0005" ixy="0.0" ixz="0.0"
+          iyy="0.0005" iyz="0.0"
+          izz="0.0005"/>
+      </inertial>
+    </link>
+
+    <joint name="${robot_base_frame}_to_${livox_frame}" type="fixed">
+      <parent link="${robot_base_frame}"/>
+      <child link="${livox_frame}"/>
+      <origin xyz="${livox_x} ${livox_y} ${livox_z}" rpy="${livox_roll} ${livox_pitch} ${livox_yaw}"/>
     </joint>
 
     <!-- ===================== -->
-    <!-- Gazebo lidar sensor -->
+    <!-- Gazebo lidar sensors -->
     <!-- PointCloud2 -->
     <!-- ===================== -->
-    <gazebo reference="${lidar_link}">
-      <sensor name="${frame_prefix}front_pointcloud_lidar" type="gpu_ray">
+    <gazebo reference="${odin1_frame}">
+      <sensor name="${wheel_prefix}odin1_pointcloud_lidar" type="gpu_ray">
         <always_on>true</always_on>
         <update_rate>10</update_rate>
         <visualize>false</visualize>
@@ -230,8 +274,8 @@
             <vertical>
               <samples>16</samples>
               <resolution>1</resolution>
-              <min_angle>-0.261799</min_angle>
-              <max_angle>0.261799</max_angle>
+              <min_angle>-0.392699</min_angle>
+              <max_angle>0.392699</max_angle>
             </vertical>
           </scan>
 
@@ -248,22 +292,24 @@
           </noise>
         </ray>
 
-        <plugin name="${frame_prefix}gazebo_ros_pointcloud" filename="libgazebo_ros_ray_sensor.so">
+        <plugin name="${wheel_prefix}odin1_gazebo_ros_pointcloud" filename="libgazebo_ros_ray_sensor.so">
           <ros>
             <namespace>/</namespace>
-            <remapping>~/out:=${cloud_topic}</remapping>
+            <remapping>~/out:=${odin1_cloud_topic}</remapping>
           </ros>
           <output_type>sensor_msgs/PointCloud2</output_type>
-          <frame_name>${lidar_link}</frame_name>
+          <frame_name>${odin1_cloud_frame}</frame_name>
         </plugin>
       </sensor>
+    </gazebo>
 
-      <sensor name="${frame_prefix}rear_pointcloud_lidar" type="gpu_ray">
+    <gazebo reference="${livox_frame}">
+      <sensor name="${wheel_prefix}mid360_pointcloud_lidar" type="gpu_ray">
         <always_on>true</always_on>
         <update_rate>10</update_rate>
         <visualize>false</visualize>
 
-        <pose>0 0 0 0 0 3.14159</pose>
+        <pose>0 0 0 0 0 0</pose>
 
         <ray>
           <scan>
@@ -277,8 +323,8 @@
             <vertical>
               <samples>16</samples>
               <resolution>1</resolution>
-              <min_angle>-0.261799</min_angle>
-              <max_angle>0.261799</max_angle>
+              <min_angle>-1.570796</min_angle>
+              <max_angle>0.392699</max_angle>
             </vertical>
           </scan>
 
@@ -295,22 +341,26 @@
           </noise>
         </ray>
 
-        <plugin name="${frame_prefix}rear_gazebo_ros_pointcloud" filename="libgazebo_ros_ray_sensor.so">
+        <plugin name="${wheel_prefix}mid360_gazebo_ros_pointcloud" filename="libgazebo_ros_ray_sensor.so">
           <ros>
             <namespace>/</namespace>
-            <remapping>~/out:=${cloud_topic}</remapping>
+            <remapping>~/out:=${livox_cloud_topic}</remapping>
           </ros>
           <output_type>sensor_msgs/PointCloud2</output_type>
-          <frame_name>${lidar_link}</frame_name>
+          <frame_name>${livox_frame}</frame_name>
         </plugin>
       </sensor>
+    </gazebo>
+
+    <gazebo reference="${robot_base_frame}">
+      <material>Gazebo/Grey</material>
     </gazebo>
 
     <!-- ===================== -->
     <!-- Gazebo omni drive plugin -->
     <!-- ===================== -->
     <gazebo>
-      <plugin name="${frame_prefix}omni_drive_controller" filename="libgazebo_ros_planar_move.so">
+      <plugin name="${wheel_prefix}omni_drive_controller" filename="libgazebo_ros_planar_move.so">
         <ros>
           <namespace>/</namespace>
           <remapping>cmd_vel:=${cmd_topic}</remapping>
@@ -320,7 +370,7 @@
         <command_topic>${cmd_topic}</command_topic>
         <odometry_topic>${odom_topic}</odometry_topic>
         <odometry_frame>${odom_frame}</odometry_frame>
-        <robot_base_frame>${base_link}</robot_base_frame>
+        <robot_base_frame>${robot_base_frame}</robot_base_frame>
 
         <publish_odom>true</publish_odom>
         <publish_odom_tf>true</publish_odom_tf>
@@ -328,23 +378,19 @@
         <update_rate>50</update_rate>
       </plugin>
     </gazebo>
-
-    <gazebo reference="${base_link}">
-      <material>${gazebo_material}</material>
-    </gazebo>
   </xacro:macro>
 
-  <xacro:simple_omni_robot
-    robot_name="$(arg robot_name)"
-    frame_prefix="$(arg frame_prefix)"
+  <xacro:real_omni_robot
+    base_frame="$(arg base_frame)"
+    robot_base_frame="$(arg robot_base_frame)"
     cmd_topic="$(arg cmd_topic)"
     odom_topic="$(arg odom_topic)"
     odom_frame="$(arg odom_frame)"
-    cloud_topic="$(arg cloud_topic)"
-    base_r="$(arg base_r)"
-    base_g="$(arg base_g)"
-    base_b="$(arg base_b)"
-    base_a="$(arg base_a)"
-    gazebo_material="$(arg gazebo_material)"/>
+    odin1_frame="$(arg odin1_frame)"
+    livox_frame="$(arg livox_frame)"
+    odin1_cloud_topic="$(arg odin1_cloud_topic)"
+    odin1_cloud_frame="$(arg odin1_cloud_frame)"
+    livox_cloud_topic="$(arg livox_cloud_topic)"
+    wheel_prefix="$(arg wheel_prefix)"/>
 
 </robot>
